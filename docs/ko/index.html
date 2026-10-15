@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <script>
+        if (!window.location.pathname.endsWith('/') && !window.location.pathname.endsWith('.html')) {
+            window.location.replace(`${window.location.pathname}/${window.location.search}${window.location.hash}`);
+        }
+    </script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-LSC44NDPLQ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-LSC44NDPLQ');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mona Mayhem 워크숍</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Nanum+Gothic:wght@400;700&family=Nanum+Gothic+Coding:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="alternate" hreflang="en" href="https://copilot-dev-days.github.io/mona-mayhem/">
+    <link rel="alternate" hreflang="pt-BR" href="https://copilot-dev-days.github.io/mona-mayhem/pt_BR/">
+    <link rel="alternate" hreflang="es" href="https://copilot-dev-days.github.io/mona-mayhem/es/">
+    <link rel="alternate" hreflang="x-default" href="https://copilot-dev-days.github.io/mona-mayhem/">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../light-theme.css">
+    <script src="../theme-toggle.js"></script>
+    <style>
+        body {
+            font-family: "Nanum Gothic", "나눔 고딕", "나눔고딕", "Space Grotesk", sans-serif;
+        }
+
+        .hero-badge,
+        .track-panel-title,
+        .track-pill,
+        .stat-value,
+        .part-time {
+            font-family: "Nanum Gothic Coding", "나눔고딕코딩", "JetBrains Mono", monospace;
+        }
+    </style>
+    <script>
+        function updateToggleIcon() {
+            const btn = document.querySelector('.theme-toggle');
+            if (!btn) return;
+            const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+            btn.innerHTML = isLight ? '🌙 어두운 테마' : '☀️ 밝은 테마';
+        }
+
+        document.addEventListener('DOMContentLoaded', updateToggleIcon);
+    </script>
+</head>
+<body>
+    <div class="top-controls">
+        <div class="track-toggle" role="tablist" aria-label="워크숍 트랙 전환">
+            <button class="track-btn active" data-track="vscode" type="button">VS Code</button>
+            <button class="track-btn" data-track="cli" type="button">CLI</button>
+        </div>
+        <div class="locale-picker" id="localePicker">
+            <button type="button" class="locale-toggle" aria-haspopup="listbox" aria-expanded="false" aria-label="언어 선택">🌐</button>
+            <ul role="listbox" aria-label="언어">
+                <li role="option" data-locale="en" aria-selected="false">🇬🇧 English</li>
+                <li role="option" data-locale="es" aria-selected="false">🇪🇸 Español</li>
+                <li role="option" data-locale="pt-BR" aria-selected="false">🇧🇷 Português (Brasil)</li>
+                <li role="option" data-locale="ko" aria-selected="true" class="active">🇰🇷 한국어</li>
+            </ul>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()">☀️ 밝은 테마</button>
+    </div>
+
+    <section class="hero">
+        <div class="container">
+            <div class="hero-badge" id="heroBadge">🎮 VS Code GitHub Copilot 워크숍</div>
+            <h1>Mona Mayhem 워크숍</h1>
+            <p class="hero-subtitle" id="heroSubtitle">레트로 아케이드 스타일의 GitHub 기여 배틀 아레나를 만들며 VS Code용 Copilot 기능인 컨텍스트 엔지니어링(Context Engineering), 계획 모드(Plan Mode), 에이전트 모드(Agent Mode), 디자인 우선 개발, 다중 에이전트 워크플로(multi-agent workflow)를 익힙니다.</p>
+            <div class="track-panel">
+                <p class="track-panel-title">Copilot 작업 환경을 선택하십시오.</p>
+                <p class="track-panel-copy" id="trackCopy">VS Code 워크숍에서 채팅(Chat), 계획 모드, 에이전트 모드, 백그라운드 에이전트(background agents), 편집기 기반 검토 흐름을 실습합니다.</p>
+                <div class="track-highlights" id="trackHighlights"></div>
+            </div>
+            <div class="hero-cta">
+                <a href="step.html?step=00-overview&amp;track=vscode" class="btn btn-primary" id="startWorkshopBtn">🚀 VS Code 워크숍 시작</a>
+                <a href="https://github.com/copilot-dev-days/mona-mayhem" class="btn btn-secondary" target="_blank">⭐ GitHub 저장소</a>
+            </div>
+            <p class="hero-note">트랙을 전환하면 배포된 문서의 모든 워크숍 단계가 선택한 작업 흐름에 맞게 표시됩니다.</p>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value">약 60분</div>
+                    <div class="stat-label">소요 시간</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">7</div>
+                    <div class="stat-label">파트</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">7+</div>
+                    <div class="stat-label">기능 프롬프트</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="container">
+            <h2 class="section-title">배울 내용</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon" id="feature1Icon">🧠</div>
+                    <h3 id="feature1Title">컨텍스트 엔지니어링</h3>
+                    <p id="feature1Copy">워크스페이스 지침, 백그라운드 에이전트, Ask 모드(Ask mode) 탐색을 활용해 Copilot이 코드베이스를 이해하도록 돕습니다.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" id="feature2Icon">📋</div>
+                    <h3 id="feature2Title">계획 모드</h3>
+                    <p id="feature2Copy">코드를 작성하기 전에 아키텍처를 설계하고 계획을 충분히 다듬은 뒤 확신을 가지고 구현합니다.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" id="feature3Icon">🤖</div>
+                    <h3 id="feature3Title">에이전트 모드</h3>
+                    <p id="feature3Copy">Copilot이 여러 파일에 걸쳐 기능 전체의 초기 구조를 자율적으로 스캐폴딩(scaffolding)하게 한 뒤, 피드백을 반영해 반복 개선합니다.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" id="feature4Icon">🎨</div>
+                    <h3 id="feature4Title">다중 에이전트 워크플로</h3>
+                    <p id="feature4Copy">백그라운드 및 클라우드 에이전트를 활용해 반응형 디자인, 오류 처리 UX, 테마 변형 등을 병렬로 다듬습니다.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="workshop">
+        <div class="container">
+            <h2 class="section-title">워크숍 구성</h2>
+            <p class="section-copy">아래 모든 파트는 공통이지만, 각 단계의 안내는 선택한 트랙에 맞게 조정됩니다.</p>
+            <div class="parts-list">
+                <a href="step.html?step=00-overview&amp;track=vscode" class="part-card" data-step="00-overview">
+                    <div class="part-number">00</div>
+                    <div class="part-content">
+                        <h3>개요</h3>
+                        <p>만들 결과물과 VS Code 트랙 및 CLI 트랙의 차이를 살펴봅니다.</p>
+                    </div>
+                    <span class="part-time">5분</span>
+                </a>
+                <a href="step.html?step=01-setup&amp;track=vscode" class="part-card" data-step="01-setup">
+                    <div class="part-number">01</div>
+                    <div class="part-content">
+                        <h3>설정 및 컨텍스트 엔지니어링</h3>
+                        <p>환경을 설정하고 Copilot에 저장소의 맥락을 알려줍니다.</p>
+                    </div>
+                    <span class="part-time">15분</span>
+                </a>
+                <a href="step.html?step=02-plan-and-scaffold&amp;track=vscode" class="part-card" data-step="02-plan-and-scaffold">
+                    <div class="part-number">02</div>
+                    <div class="part-content">
+                        <h3>계획 및 스캐폴딩</h3>
+                        <p>구현에 앞서 API와 페이지 아키텍처를 설계합니다.</p>
+                    </div>
+                    <span class="part-time">15분</span>
+                </a>
+                <a href="step.html?step=03-agent-mode&amp;track=vscode" class="part-card" data-step="03-agent-mode">
+                    <div class="part-number">03</div>
+                    <div class="part-content">
+                        <h3>게임 구현</h3>
+                        <p>AI 에이전트 기반 코딩 워크플로를 활용해 배틀 페이지를 구현합니다.</p>
+                    </div>
+                    <span class="part-time">10분</span>
+                </a>
+                <a href="step.html?step=04-design-vibes&amp;track=vscode" class="part-card" data-step="04-design-vibes">
+                    <div class="part-number">04</div>
+                    <div class="part-content">
+                        <h3>디자인 우선 테마 구성</h3>
+                        <p>계획 우선 프롬프트와 반복적인 다듬기로 UI를 새롭게 구성합니다.</p>
+                    </div>
+                    <span class="part-time">10분</span>
+                </a>
+                <a href="step.html?step=05-polish&amp;track=vscode" class="part-card" data-step="05-polish">
+                    <div class="part-number">05</div>
+                    <div class="part-content">
+                        <h3>다듬기 및 병렬 작업</h3>
+                        <p>다중 에이전트 또는 다중 세션 워크플로로 완성도를 높입니다.</p>
+                    </div>
+                    <span class="part-time">10분</span>
+                </a>
+                <a href="step.html?step=06-bonus&amp;track=vscode" class="part-card" data-step="06-bonus">
+                    <div class="part-number">🎉</div>
+                    <div class="part-content">
+                        <h3>보너스 및 확장 기능</h3>
+                        <p>자유 과제, 공유 방법, 추가 Copilot 실험을 살펴봅니다.</p>
+                    </div>
+                    <span class="part-time">15분 이상</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="prereqs">
+        <div class="container">
+            <h2 class="section-title">사전 준비</h2>
+            <div class="prereqs-grid" id="prereqsGrid"></div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-links">
+                <a href="https://github.com/copilot-dev-days/mona-mayhem" target="_blank">GitHub 저장소</a>
+                <a href="https://docs.github.com/en/copilot" target="_blank">Copilot 문서</a>
+                <a href="https://docs.github.com/en/copilot/how-tos/copilot-cli" target="_blank">Copilot CLI 문서</a>
+                <a href="https://github.com/github/awesome-copilot" target="_blank">Awesome Copilot</a>
+            </div>
+            <p class="footer-credit">GitHub Copilot 팀이 💜를 담아 만들었습니다.</p>
+        </div>
+    </footer>
+
+    <script>
+        const TRACK_STORAGE_KEY = 'monaMayhemWorkshopTrack';
+        const tracks = {
+            vscode: {
+                label: 'VS Code',
+                badge: '🎮 VS Code GitHub Copilot 워크숍',
+                subtitle: '레트로 아케이드 스타일의 GitHub 기여 배틀 아레나를 만들며 VS Code용 Copilot 기능인 컨텍스트 엔지니어링(Context Engineering), 계획 모드(Plan Mode), 에이전트 모드(Agent Mode), 디자인 우선 개발, 다중 에이전트 워크플로(multi-agent workflow)를 익힙니다.',
+                copy: 'VS Code 워크숍에서 채팅(Chat), 계획 모드, 에이전트 모드, 백그라운드 에이전트(background agents), 편집기 기반 검토 흐름을 실습합니다.',
+                highlights: ['채팅 패널', '계획 모드', '에이전트 모드', '백그라운드 에이전트'],
+                prerequisites: ['VS Code v1.107+', 'GitHub Copilot', 'Node.js 18+', 'Git 설치'],
+                features: [
+                    { icon: '🧠', title: '컨텍스트 엔지니어링', copy: '워크스페이스 지침, 백그라운드 에이전트, Ask 모드(Ask mode) 탐색을 활용해 Copilot이 코드베이스를 이해하도록 돕습니다.' },
+                    { icon: '📋', title: '계획 모드', copy: '코드를 작성하기 전에 아키텍처를 설계하고 계획을 충분히 다듬은 뒤 확신을 가지고 구현합니다.' },
+                    { icon: '🤖', title: '에이전트 모드', copy: 'Copilot이 여러 파일에 걸쳐 기능 전체의 초기 구조를 자율적으로 스캐폴딩(scaffolding)하게 한 뒤, 피드백을 반영해 반복 개선합니다.' },
+                    { icon: '🎨', title: '다중 에이전트 워크플로', copy: '백그라운드 및 클라우드 에이전트를 활용해 반응형 디자인, 오류 처리 UX, 테마 변형 등을 병렬로 다듬습니다.' }
+                ]
+            },
+            cli: {
+                label: 'CLI',
+                badge: '💻 GitHub Copilot CLI 워크숍',
+                subtitle: '터미널에 최적화된 Copilot 워크플로를 익히며 동일한 레트로 아케이드 앱을 만듭니다. 사용자 지정 지침, /plan, 자율 편집, /fleet 병렬 작업, /delegate, /review를 다룹니다.',
+                copy: 'CLI 워크숍에서는 터미널에서 계획, 코딩, 검토를 진행하고 에이전트 명령으로 작업을 병렬화합니다.',
+                highlights: ['copilot', '/plan', '/fleet', '/delegate', '/review'],
+                prerequisites: ['CLI를 사용할 수 있는 GitHub Copilot 플랜', 'npm(Node.js 22+ 필요), Homebrew 또는 WinGet으로 설치한 Copilot CLI', 'Git 설치', '원하는 터미널 또는 셸'],
+                features: [
+                    { icon: '🛠️', title: '사용자 지정 지침 및 권한', copy: '저장소 지침을 초기화하고 허용 목록을 조정한 뒤 Copilot에 필요한 맥락과 도구를 정확히 제공합니다.' },
+                    { icon: '📋', title: '계획 및 오토파일럿(Autopilot)', copy: '먼저 /plan 또는 Shift+Tab으로 계획을 작성한 다음 승인을 받아 Copilot이 구현하도록 합니다.' },
+                    { icon: '⚡', title: 'CLI 병렬 워크플로', copy: '/fleet으로 하위 에이전트(subagent)에 작업을 분담하고 diff를 검토하는 동안 작업 흐름을 유지합니다.' },
+                    { icon: '🔍', title: '위임 및 검토', copy: '선택적 작업을 /delegate로 위임하고 워크숍을 마치기 전에 /review를 실행합니다.' }
+                ]
+            }
+        };
+
+        function normalizeTrack(track) {
+            return track === 'cli' ? 'cli' : 'vscode';
+        }
+
+        function getInitialTrack() {
+            const params = new URLSearchParams(window.location.search);
+            const fromUrl = params.get('track');
+            if (fromUrl === 'vscode' || fromUrl === 'cli') {
+                return fromUrl;
+            }
+
+            try {
+                return normalizeTrack(localStorage.getItem(TRACK_STORAGE_KEY));
+            } catch (error) {
+                console.warn('Unable to read saved workshop track preference.', error);
+                return 'vscode';
+            }
+        }
+
+        function persistTrack(track) {
+            try {
+                localStorage.setItem(TRACK_STORAGE_KEY, track);
+            } catch (error) {
+                console.warn('Unable to persist workshop track preference.', error);
+            }
+        }
+
+        function buildStepUrl(stepId, track) {
+            return `step.html?step=${stepId}&track=${track}`;
+        }
+
+        function updateQueryString(track) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('track', track);
+            window.history.replaceState({}, '', url);
+        }
+
+        function updateTrackButtons(track) {
+            document.querySelectorAll('.track-btn').forEach((button) => {
+                const isActive = button.dataset.track === track;
+                button.classList.toggle('active', isActive);
+                button.setAttribute('aria-pressed', String(isActive));
+            });
+        }
+
+        function updateHighlights(highlights) {
+            const container = document.getElementById('trackHighlights');
+            container.innerHTML = highlights.map((item) => `<span class="track-pill">${item}</span>`).join('');
+        }
+
+        function updatePrereqs(items) {
+            const grid = document.getElementById('prereqsGrid');
+            grid.innerHTML = items.map((item) => `
+                <div class="prereq-item">
+                    <span class="prereq-check">✓</span>
+                    <span>${item}</span>
+                </div>
+            `).join('');
+        }
+
+        function updateFeatures(features) {
+            features.forEach((feature, index) => {
+                const cardIndex = index + 1;
+                document.getElementById(`feature${cardIndex}Icon`).textContent = feature.icon;
+                document.getElementById(`feature${cardIndex}Title`).textContent = feature.title;
+                document.getElementById(`feature${cardIndex}Copy`).textContent = feature.copy;
+            });
+        }
+
+        function updateLinks(track) {
+            document.getElementById('startWorkshopBtn').href = buildStepUrl('00-overview', track);
+            document.getElementById('startWorkshopBtn').textContent = `🚀 ${tracks[track].label} 워크숍 시작`;
+            document.querySelectorAll('[data-step]').forEach((link) => {
+                link.href = buildStepUrl(link.dataset.step, track);
+            });
+        }
+
+        function renderTrack(track) {
+            const content = tracks[track];
+            document.getElementById('heroBadge').textContent = content.badge;
+            document.getElementById('heroSubtitle').textContent = content.subtitle;
+            document.getElementById('trackCopy').textContent = content.copy;
+            updateHighlights(content.highlights);
+            updatePrereqs(content.prerequisites);
+            updateFeatures(content.features);
+            updateLinks(track);
+            updateTrackButtons(track);
+            document.body.dataset.track = track;
+        }
+
+        function setTrack(track) {
+            const normalizedTrack = normalizeTrack(track);
+            persistTrack(normalizedTrack);
+            updateQueryString(normalizedTrack);
+            renderTrack(normalizedTrack);
+        }
+
+        document.querySelectorAll('.track-btn').forEach((button) => {
+            button.addEventListener('click', () => setTrack(button.dataset.track));
+        });
+
+        renderTrack(getInitialTrack());
+    </script>
+
+    <script>
+    (function(){
+      var match=location.pathname.match(/\/(pt_BR|es|ko)\//);
+      var locale=match?match[1]:'en';
+      var picker=document.getElementById('localePicker');
+      if(!picker)return;
+      var btn=picker.querySelector('.locale-toggle'),list=picker.querySelector('ul');
+      list.querySelectorAll('li').forEach(function(li){
+        var l=li.dataset.locale==='pt-BR'?'pt_BR':li.dataset.locale;
+        if(l===locale){li.classList.add('active');li.setAttribute('aria-selected','true');}
+        else{li.classList.remove('active');li.setAttribute('aria-selected','false');}
+      });
+      function open(){list.style.display='block';btn.setAttribute('aria-expanded','true');}
+      function close(){list.style.display='none';btn.setAttribute('aria-expanded','false');}
+      btn.addEventListener('click',function(e){e.stopPropagation();list.style.display==='block'?close():open();});
+      document.addEventListener('click',close);
+      document.addEventListener('keydown',function(e){if(e.key==='Escape')close();});
+      list.querySelectorAll('li').forEach(function(li){
+        li.addEventListener('click',function(e){
+          e.stopPropagation();
+          var t=li.dataset.locale==='pt-BR'?'pt_BR':li.dataset.locale;
+          if(t===locale){close();return;}
+          var p=location.pathname;
+          if(locale!=='en')p=p.replace(new RegExp('/'+locale+'/'),'/');
+          if(t!=='en'){var base=p.replace(/\/index\.html$/,'/');if(!base.endsWith('/'))base+='/';p=base+t+'/';}
+          localStorage.setItem('preferred-locale',t);
+          window.location.href=p+location.search+location.hash;
+        });
+      });
+    })();
+    </script>
+</body>
+</html>
