@@ -8,10 +8,417 @@
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Mona Mayhem</title>
+		<title>Mona Mayhem - GitHub Contribution Battle Arena</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
 	</head>
 	<body>
-		<h1>Mona Mayhem</h1>
-		<p>Welcome to Mona Mayhem! Time to build a GitHub Contribution Battle Arena.</p>
+		<main>
+			<header>
+				<h1>Mona Mayhem</h1>
+				<p class="subtitle">GitHub Contribution Battle Arena</p>
+				<p>Choose two GitHub users for a contribution battle.</p>
+			</header>
+			<form id="battle-form" novalidate>
+				<fieldset>
+					<legend>Choose your players</legend>
+					<div class="players">
+						<div class="player-input">
+							<label for="player-1">Player 1</label>
+							<input id="player-1" name="player1" type="text" required maxlength="39"
+								pattern="[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*" autocomplete="off"
+								autocapitalize="none" spellcheck="false" aria-describedby="username-help player-1-error" />
+							<p id="player-1-error" class="input-error" hidden></p>
+						</div>
+						<div class="player-input">
+							<label for="player-2">Player 2</label>
+							<input id="player-2" name="player2" type="text" required maxlength="39"
+								pattern="[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*" autocomplete="off"
+								autocapitalize="none" spellcheck="false" aria-describedby="username-help player-2-error" />
+							<p id="player-2-error" class="input-error" hidden></p>
+						</div>
+					</div>
+					<p id="username-help">Enter GitHub usernames using letters, numbers, and single hyphens (up to 39 characters).</p>
+				</fieldset>
+				<button type="submit">Battle</button>
+			</form>
+			<p id="battle-status" role="status" aria-live="polite"></p>
+			<section aria-labelledby="results-heading">
+				<h2 id="results-heading">Results</h2>
+				<div class="battle-results">
+					<article aria-labelledby="player-1-results">
+						<h3 id="player-1-results">Player 1</h3>
+						<div id="player-1-content"><p>Contribution results will appear here.</p></div>
+					</article>
+					<span class="vs" aria-label="versus"><span>VS</span></span>
+					<article aria-labelledby="player-2-results">
+						<h3 id="player-2-results">Player 2</h3>
+						<div id="player-2-content"><p>Contribution results will appear here.</p></div>
+					</article>
+				</div>
+			</section>
+		</main>
 	</body>
 </html>
+
+<script>
+	import { CONTRIBUTION_COLORS, contributionDate, fetchContributions } from '../lib/contributions';
+	import type { ContributionData } from '../lib/contributions';
+
+	const form = document.querySelector<HTMLFormElement>('#battle-form')!;
+	const inputs = [
+		document.querySelector<HTMLInputElement>('#player-1')!,
+		document.querySelector<HTMLInputElement>('#player-2')!,
+	];
+	const button = form.querySelector<HTMLButtonElement>('button')!;
+	const status = document.querySelector<HTMLParagraphElement>('#battle-status')!;
+	const contents = [document.querySelector<HTMLDivElement>('#player-1-content')!,
+		document.querySelector<HTMLDivElement>('#player-2-content')!];
+	const headings = [document.querySelector<HTMLHeadingElement>('#player-1-results')!,
+		document.querySelector<HTMLHeadingElement>('#player-2-results')!];
+	const errors = inputs.map((input) => document.querySelector<HTMLParagraphElement>(`#${input.id}-error`)!);
+	let validationAttempted = false;
+
+	function validateInput(input: HTMLInputElement, index: number) {
+		const username = input.value.trim();
+		const message = !username
+			? `Enter a GitHub username for Player ${index + 1}.`
+			: username.length > 39 || !/^[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*$/.test(username)
+				? 'Use 1–39 letters or numbers, with single hyphens only between them. Remove spaces or @ signs.'
+				: '';
+		errors[index].textContent = message;
+		errors[index].hidden = !message;
+		input.setAttribute('aria-invalid', String(Boolean(message)));
+		return !message;
+	}
+
+	inputs.forEach((input, index) => {
+		input.addEventListener('input', () => {
+			if (!validationAttempted) return;
+			validateInput(input, index);
+			if (inputs.every((field) => field.getAttribute('aria-invalid') === 'false') && status.classList.contains('validation-error')) {
+				status.textContent = '';
+				status.classList.remove('error', 'validation-error');
+			}
+		});
+	});
+
+	function renderContributions(container: HTMLElement, data: ContributionData) {
+		const summary = document.createElement('p');
+		summary.textContent = `${data.total_contributions.toLocaleString()} total contributions`;
+		const range = document.createElement('p');
+		range.textContent = `${data.from} to ${data.to}`;
+		const graph = document.createElement('div');
+		graph.className = 'contribution-grid';
+		graph.setAttribute('role', 'grid');
+		graph.setAttribute('aria-label', `Daily contributions from ${data.from} to ${data.to}. ${summary.textContent}.`);
+		const hint = document.createElement('p');
+		hint.id = `${container.id}-graph-help`;
+		hint.textContent = 'Less to more: light gray to dark green. Hover or focus a day for its date and count. Tab enters or leaves the graph; arrow keys move by day (up/down) or week (left/right). Home/End move to the first/last day.';
+		graph.setAttribute('aria-describedby', hint.id);
+		const detail = document.createElement('p');
+		detail.className = 'contribution-detail';
+		const cells: { element: HTMLSpanElement; week: number; weekday: number; label: string }[] = [];
+		const weeks = [...data.weeks].sort((a, b) => a.first_day.localeCompare(b.first_day));
+		graph.setAttribute('aria-rowcount', '7');
+		graph.setAttribute('aria-colcount', String(weeks.length));
+		const rows = Array.from({ length: 7 }, (_, weekday) => {
+			const row = document.createElement('div');
+			row.className = 'contribution-row';
+			row.setAttribute('role', 'row');
+			row.setAttribute('aria-rowindex', String(weekday + 1));
+			row.style.gridTemplateColumns = `repeat(${Math.max(weeks.length, 1)}, 10px)`;
+			graph.append(row);
+			return row;
+		});
+		let selected = 0;
+		let weekIndex = 0;
+		for (const week of weeks) {
+			for (const day of [...week.contribution_days].sort((a, b) => a.weekday - b.weekday)) {
+				const date = contributionDate(week.first_day, day.weekday);
+				if (date < data.from || date > data.to) continue;
+				const square = document.createElement('span');
+				square.className = 'contribution-day';
+				square.style.gridColumn = String(weekIndex + 1);
+				square.style.backgroundColor = CONTRIBUTION_COLORS[day.level];
+				const label = `${date}: ${day.count} contributions`;
+				square.title = label;
+				square.setAttribute('role', 'gridcell');
+				square.setAttribute('aria-colindex', String(weekIndex + 1));
+				square.setAttribute('aria-label', label);
+				square.tabIndex = cells.length === 0 ? 0 : -1;
+				const index = cells.length;
+				cells.push({ element: square, week: weekIndex, weekday: day.weekday, label });
+				square.addEventListener('focus', () => {
+					cells[selected].element.tabIndex = -1;
+					selected = index;
+					square.tabIndex = 0;
+					detail.textContent = label;
+				});
+				square.addEventListener('mouseenter', () => { detail.textContent = label; });
+				square.addEventListener('mouseleave', () => { detail.textContent = cells[selected].label; });
+				rows[day.weekday].append(square);
+			}
+			weekIndex++;
+		}
+		detail.textContent = cells[0]?.label ?? 'No daily contributions available.';
+		graph.addEventListener('keydown', (event) => {
+			const current = cells[selected];
+			if (!current) return;
+			let next = -1;
+			switch (event.key) {
+				case 'ArrowUp':
+				case 'ArrowDown':
+					next = cells.findIndex((cell) => cell.week === current.week
+						&& cell.weekday === current.weekday + (event.key === 'ArrowUp' ? -1 : 1));
+					break;
+				case 'ArrowLeft':
+				case 'ArrowRight':
+					next = cells.findIndex((cell) => cell.week === current.week + (event.key === 'ArrowLeft' ? -1 : 1)
+						&& cell.weekday === current.weekday);
+					break;
+				case 'Home': next = 0; break;
+				case 'End': next = cells.length - 1; break;
+				default: return;
+			}
+			event.preventDefault();
+			if (next >= 0) cells[next].element.focus();
+		});
+		container.replaceChildren(summary, range, graph, detail, hint);
+	}
+
+	form.addEventListener('submit', async (event) => {
+		event.preventDefault();
+		if (button.disabled) return;
+		for (const input of inputs) input.value = input.value.trim();
+		validationAttempted = true;
+		const validity = inputs.map(validateInput);
+		const invalid = inputs.find((_, index) => !validity[index]);
+		if (invalid) {
+			status.classList.add('error', 'validation-error');
+			status.textContent = 'Check the highlighted player fields. Enter a valid GitHub username for each player.';
+			invalid.focus();
+			return;
+		}
+		status.classList.remove('error', 'validation-error');
+		const usernames = inputs.map((input) => input.value);
+		button.disabled = true;
+		button.textContent = 'Loading...';
+		for (const input of inputs) input.readOnly = true;
+		form.setAttribute('aria-busy', 'true');
+		status.textContent = 'Loading contributions for both players...';
+		status.classList.add('is-loading');
+		contents.forEach((content, index) => {
+			headings[index].textContent = `Player ${index + 1}: ${usernames[index]}`;
+			content.textContent = 'Loading contributions...';
+			content.classList.remove('error');
+			content.classList.add('is-loading');
+		});
+		try {
+			const results = await Promise.allSettled(usernames.map(async (username, index) => {
+				try {
+					const data = await fetchContributions(username);
+					renderContributions(contents[index], data);
+				} finally {
+					contents[index].classList.remove('is-loading');
+				}
+			}));
+			results.forEach((result, index) => {
+				if (result.status === 'rejected') {
+					console.error('Player contribution lookup failed', result.reason);
+					contents[index].textContent = result.reason instanceof Error
+						? result.reason.message : 'Could not load contributions. Try again.';
+					contents[index].classList.add('error');
+				}
+			});
+			const failed = results.filter((result) => result.status === 'rejected').length;
+			status.classList.toggle('error', failed > 0);
+			status.textContent = failed === 0 ? 'Contributions loaded for both players.'
+				: failed === 1 ? 'One player could not be loaded. Review the error below and try again.'
+					: 'Neither player could be loaded. Review the errors below and try again.';
+		} finally {
+			status.classList.remove('is-loading');
+			button.disabled = false;
+			button.textContent = 'Battle';
+			for (const input of inputs) input.readOnly = false;
+			form.removeAttribute('aria-busy');
+		}
+	});
+</script>
+
+<style>
+	:global(:root) {
+		color-scheme: dark;
+		--arcade-bg: #0a0a1a;
+		--arcade-green: #5fed83;
+		--arcade-purple: #8a2be2;
+		--arcade-text: #e4e5f5;
+		--arcade-muted: #b8b6ce;
+		--arcade-surface: #121227;
+		--arcade-error: #ffadbe;
+	}
+	body {
+		margin: 0;
+		padding: 2.5rem 1rem;
+		font-family: 'Press Start 2P', monospace;
+		font-size: 0.7rem;
+		color: var(--arcade-text);
+		background: var(--arcade-bg);
+		line-height: 2;
+		isolation: isolate;
+	}
+	body::before {
+		content: '';
+		position: fixed;
+		inset: 0;
+		z-index: -1;
+		pointer-events: none;
+		background: repeating-linear-gradient(0deg, transparent 0 2px, rgb(95 237 131 / 0.05) 2px 3px);
+	}
+	main { max-width: 76rem; margin: 0 auto; }
+	header { text-align: center; }
+	h1 {
+		font-size: clamp(1.5rem, 5vw, 3.25rem);
+		color: var(--arcade-green);
+		text-shadow: 0 0 8px rgb(95 237 131 / 0.5);
+		animation: neon-pulse 3s ease-in-out infinite;
+	}
+	header, form { margin-bottom: 2rem; }
+	h1, h2, h3 { line-height: 1.7; overflow-wrap: anywhere; }
+	h2 { font-size: 1rem; color: var(--arcade-green); }
+	h3 { font-size: 0.8rem; color: var(--arcade-green); }
+	.subtitle { font-size: clamp(0.7rem, 2vw, 1rem); color: #cfadf6; }
+	p { overflow-wrap: anywhere; }
+	#username-help { color: var(--arcade-muted); font-size: 0.6rem; }
+	.players { display: grid; gap: 1rem; }
+	.players > * { min-width: 0; }
+	.player-input { animation: float-in 0.6s ease-out both; }
+	.player-input:nth-child(2) { animation-delay: 0.1s; }
+	.battle-results { display: grid; gap: 1rem; align-items: start; }
+	.battle-results > * { min-width: 0; }
+	.vs {
+		align-self: center;
+		justify-self: center;
+		padding: 0.2rem;
+		border: 1px solid var(--arcade-green);
+		background: linear-gradient(120deg, var(--arcade-green), var(--arcade-purple), var(--arcade-green));
+		background-size: 300% 300%;
+		color: var(--arcade-bg);
+		box-shadow: 0 0 18px rgb(138 43 226 / 0.4);
+		animation: vs-shift 5s ease-in-out infinite;
+	}
+	.vs > span {
+		display: block;
+		padding: 0.6rem;
+		color: var(--arcade-green);
+		background: var(--arcade-bg);
+	}
+	:global(.error), .input-error { color: var(--arcade-error); }
+	.input-error { margin: 0.65rem 0 0; font-size: 0.6rem; }
+	input[aria-invalid='true'] {
+		border: 2px solid var(--arcade-error);
+		background: #271321;
+		box-shadow: 0 0 14px rgb(255 87 135 / 0.35);
+	}
+	:global([id$='-content'].error), #battle-status.error {
+		padding: 0.85rem;
+		border: 2px solid var(--arcade-error);
+		background: #271321;
+		box-shadow: 0 0 16px rgb(255 87 135 / 0.3), inset 0 0 12px rgb(255 87 135 / 0.08);
+	}
+	:global(.is-loading) { animation: loading-shift 2.5s ease-in-out infinite; }
+	#battle-status { min-height: 2em; }
+	:global(.contribution-grid) { display: grid; grid-template-rows: repeat(7, 10px); gap: 3px; overflow-x: auto; padding: 0.6rem; }
+	:global(.contribution-row) { display: grid; gap: 3px; width: max-content; }
+	:global(.contribution-day) {
+		width: 10px;
+		height: 10px;
+		border-radius: 2px;
+		transition: box-shadow 0.2s ease;
+	}
+	:global(.contribution-day:hover) {
+		box-shadow: 0 0 8px 2px var(--arcade-green);
+		outline: 1px solid var(--arcade-green);
+	}
+	:global(.contribution-day:focus-visible) {
+		outline: 2px solid white;
+		outline-offset: 2px;
+		box-shadow: 0 0 0 4px var(--arcade-purple), 0 0 12px 4px var(--arcade-green);
+	}
+	:global(.contribution-detail) { min-height: 2em; color: var(--arcade-green); }
+	fieldset, article {
+		min-width: 0;
+		margin: 0;
+		padding: 1.25rem;
+		border: 1px solid var(--arcade-purple);
+		background: var(--arcade-surface);
+		box-shadow: 0 0 16px rgb(138 43 226 / 0.12);
+	}
+	legend { color: var(--arcade-green); padding: 0 0.5rem; }
+	article { position: relative; isolation: isolate; overflow: hidden; }
+	article::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		pointer-events: none;
+		background: linear-gradient(110deg, transparent 35%, rgb(95 237 131 / 0.09) 48%, rgb(138 43 226 / 0.12) 52%, transparent 65%);
+		transform: translateX(-150%);
+		animation: card-shine 7s ease-in-out infinite;
+	}
+	article:nth-of-type(2)::before { animation-delay: 1s; }
+	article h3 { margin-top: 0; }
+	label { display: block; margin-bottom: 0.5rem; color: var(--arcade-green); }
+	input, button { box-sizing: border-box; padding: 0.9rem; font: inherit; line-height: 1.8; border: 1px solid var(--arcade-green); }
+	input { width: 100%; min-width: 0; background: var(--arcade-bg); color: var(--arcade-text); }
+	button {
+		margin-top: 1rem;
+		background: var(--arcade-green);
+		color: var(--arcade-bg);
+		cursor: pointer;
+		box-shadow: 0 0 12px rgb(95 237 131 / 0.25);
+	}
+	button:hover:not(:disabled) { box-shadow: 0 0 22px rgb(95 237 131 / 0.6); }
+	button:disabled { color: var(--arcade-muted); background: #27243d; border-color: var(--arcade-purple); cursor: wait; box-shadow: none; }
+	input:focus-visible, button:focus-visible { outline: 3px solid var(--arcade-green); outline-offset: 4px; box-shadow: 0 0 16px rgb(95 237 131 / 0.55); }
+	input[aria-invalid='true']:focus-visible { outline-color: var(--arcade-error); box-shadow: 0 0 18px rgb(255 87 135 / 0.5); }
+	@keyframes neon-pulse {
+		0%, 100% { text-shadow: 0 0 6px rgb(95 237 131 / 0.4), 0 0 15px rgb(95 237 131 / 0.2); }
+		50% { text-shadow: 0 0 12px rgb(95 237 131 / 0.8), 0 0 32px rgb(95 237 131 / 0.5), 0 0 48px rgb(138 43 226 / 0.3); }
+	}
+	@keyframes vs-shift {
+		0%, 100% { background-position: 0% 50%; }
+		50% { background-position: 100% 50%; }
+	}
+	@keyframes card-shine {
+		0%, 15% { transform: translateX(-150%); }
+		45%, 100% { transform: translateX(150%); }
+	}
+	@keyframes float-in {
+		from { opacity: 0; transform: translateY(1rem); }
+		to { opacity: 1; transform: translateY(0); }
+	}
+	@keyframes loading-shift {
+		0%, 100% { color: var(--arcade-green); }
+		50% { color: var(--arcade-purple); }
+	}
+	@media (width < 640px) {
+		.players { grid-template-columns: minmax(0, 1fr); }
+	}
+	@media (min-width: 640px) {
+		.players { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	}
+	@media (max-width: 1024px) {
+		.battle-results { grid-template-columns: minmax(0, 1fr); }
+	}
+	@media (width > 1024px) {
+		.battle-results { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+	}
+	@media (prefers-reduced-motion: reduce) {
+		h1, .vs, article::before, .player-input, :global(.is-loading) { animation: none; }
+		.player-input { opacity: 1; transform: none; }
+		:global(.is-loading) { color: var(--arcade-green); }
+		:global(.contribution-day) { transition: none; }
+	}
+</style>
