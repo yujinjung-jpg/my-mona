@@ -15,10 +15,9 @@ export interface ContributionData {
 	from: string;
 	to: string;
 	total_contributions: number;
+	colors_full: string[];
 	weeks: ContributionWeek[];
 }
-
-export const CONTRIBUTION_COLORS = ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null;
@@ -42,7 +41,7 @@ export function contributionDate(firstDay: string, weekday: number): string {
 
 function isDay(value: unknown): value is ContributionDay {
 	return isRecord(value) && isCount(value.weekday) && value.weekday <= 6
-		&& isCount(value.count) && isCount(value.level) && value.level < CONTRIBUTION_COLORS.length;
+		&& isCount(value.count) && isCount(value.level) && value.level < 5;
 }
 
 function isWeek(value: unknown): value is ContributionWeek {
@@ -55,6 +54,8 @@ function isWeek(value: unknown): value is ContributionWeek {
 export function parseContributions(value: unknown): ContributionData {
 	if (!isRecord(value) || value.schema !== 'v2' || !isDate(value.from) || !isDate(value.to)
 		|| value.from > value.to || !isCount(value.total_contributions)
+		|| !Array.isArray(value.colors_full) || value.colors_full.length !== 5
+		|| !value.colors_full.every((color: unknown) => typeof color === 'string' && /^#[a-f\d]{6}$/i.test(color))
 		|| !Array.isArray(value.weeks) || !value.weeks.every(isWeek)) {
 		throw new Error('GitHub returned unsupported contribution data. Please try again later.');
 	}
@@ -63,6 +64,7 @@ export function parseContributions(value: unknown): ContributionData {
 		from: value.from,
 		to: value.to,
 		total_contributions: value.total_contributions,
+		colors_full: value.colors_full,
 		weeks: value.weeks,
 	};
 }

@@ -79,7 +79,17 @@ Open `http://localhost:4321`, enter two GitHub usernames, and click Battle or pr
 
 The form trims surrounding whitespace and displays linked inline errors for each missing/invalid username, focusing the first invalid field. Invalid fields and request failures use neon error styling; correcting a field clears its validation feedback. Keyboard focus remains visible on controls and graph cells. While loading, duplicate submissions are blocked. Errors are shown per player so one failed lookup does not hide the other player's result; correct the input or retry after the request finishes.
 
+Once both lookups succeed, an animated banner announces the user with more total contributions, or a tie if totals match. A new submission clears the previous banner; failed lookups never produce a winner. The banner respects reduced-motion preferences.
+
+Battle! starts a full-screen `3...`, `2...`, `1...`, `⚡ FIGHT! ⚡` sequence, with each step lasting about one second. Requests run during the countdown; results are revealed with a slide-in only after both the sequence and requests finish. Slow requests continue showing loading after the overlay closes. Reduced-motion preferences disable the slide-in.
+
+Recent Battles stores the last 10 successful comparisons in this browser's localStorage, newest first, including usernames, contribution totals, winner (or tie), and completion time. Records survive reloads; Clear History removes only this app's battle history. Storage failures are shown separately and do not interrupt the battle results.
+
+After both users load successfully, Share Results copies a formatted summary with both usernames, totals, and the winner or tie. A “Copied to clipboard!” message appears for three seconds. Clipboard access requires HTTPS or localhost and browser permission; failures show a retryable error without affecting results.
+
 The arcade theme uses a dark CRT scanline background, green/purple neon accents, and Google Fonts' Press Start 2P with a monospace fallback. The title, VS badge, result cards, input entrance, and loading text have CSS effects; contribution squares glow on hover without changing their GitHub colors. System reduced-motion preferences disable the animations.
+
+Each graph and its Less–More legend use that user's API-provided `colors_full` palette in contribution-level order (0–4), rather than a hard-coded set of colors.
 
 ### Contribution API
 

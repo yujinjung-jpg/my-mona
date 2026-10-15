@@ -46,4 +46,5 @@ Tests live under `src/lib/` as `*.test.ts` and mock fetch rather than depending 
 - Dynamic graph and loading classes need Astro `:global()` selectors. Clear each player's `.is-loading` when its request settles and the shared status class when both finish; do not animate completed results as loading.
 - Results stack at widths ≤1024px; inputs stack below 640px. Graph cells use roving tabindex: one Tab stop per graph, arrows for day/week navigation, Home/End for endpoints, with visible date/count feedback.
 - Graph ARIA rows correspond to weekdays and columns to weeks, matching visual layout and arrow-key axes. Preserve row/column indices for partial weeks. Keep VS text on its fixed dark inset so the animated border cannot reduce contrast.
+- Use each response's validated `colors_full` palette for both day cells and the Less–More legend in level order 0–4; do not hard-code GitHub colors or sort the palette.
 - Input validation uses linked inline messages and `aria-invalid`, focuses the first invalid field, and quietly clears feedback on correction. Preserve neon error styling and keyboard `:focus-visible` indicators.

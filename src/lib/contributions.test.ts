@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { CONTRIBUTION_COLORS, contributionDate, fetchContributions, parseContributions } from './contributions';
+import { contributionDate, fetchContributions, parseContributions } from './contributions';
 
 const data = {
 	schema: 'v2', from: '2026-10-11', to: '2026-10-15', total_contributions: 12,
+	colors_full: ['#eeeeee', '#aaddaa', '#77bb77', '#448844', '#115511'],
 	weeks: [{ index: 0, first_day: '2026-10-11', contribution_days: [
 		{ weekday: 0, count: 0, level: 0 }, { weekday: 4, count: 12, level: 4 },
 	] }],
@@ -13,7 +14,7 @@ afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 describe('contribution data', () => {
 	it('accepts the live v2 structure and all five GitHub levels', () => {
 		expect(parseContributions(data)).toEqual(data);
-		expect(CONTRIBUTION_COLORS).toEqual(['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39']);
+		expect(parseContributions(data).colors_full).toEqual(data.colors_full);
 		for (let level = 0; level < 5; level++) {
 			expect(() => parseContributions({
 				...data, weeks: [{ ...data.weeks[0], contribution_days: [{ weekday: 0, count: level, level }] }],
@@ -23,6 +24,8 @@ describe('contribution data', () => {
 
 	it.each([
 		null, {}, { ...data, schema: 'v1' }, { ...data, total_contributions: -1 },
+		{ ...data, colors_full: undefined }, { ...data, colors_full: [] },
+		{ ...data, colors_full: ['red', '#000000', '#000000', '#000000', '#000000'] },
 		{ ...data, total_contributions: '12' }, { ...data, from: '2026-02-30' },
 		{ ...data, from: '2026-10-16' }, { ...data, weeks: [null] },
 		{ ...data, weeks: [{ ...data.weeks[0], first_day: '2026-10-12' }] },
